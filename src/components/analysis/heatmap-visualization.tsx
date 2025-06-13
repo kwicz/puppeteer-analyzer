@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface HeatmapVisualizationProps {
   imageUrl?: string | null | undefined;
@@ -16,6 +16,14 @@ export default function HeatmapVisualization({
   alt = 'Website screenshot with heatmap overlay',
 }: HeatmapVisualizationProps) {
   const [showHeatmap, setShowHeatmap] = useState(true);
+
+  useEffect(() => {
+    console.log('HeatmapVisualization props:', {
+      imageUrl: imageUrl ? 'Present' : 'Missing',
+      heatmapImageUrl: heatmapImageUrl ? 'Present' : 'Missing',
+      isLoading,
+    });
+  }, [imageUrl, heatmapImageUrl, isLoading]);
 
   if (isLoading) {
     return (
@@ -95,6 +103,16 @@ export default function HeatmapVisualization({
               width: '100%',
               height: '100%',
               objectFit: 'contain',
+            }}
+            onError={(e) => {
+              console.error('Image failed to load:', currentImage);
+              console.error('Error details:', e);
+            }}
+            onLoad={() => {
+              console.log(
+                'Image loaded successfully:',
+                showHeatmap ? 'heatmap' : 'original'
+              );
             }}
           />
         ) : (

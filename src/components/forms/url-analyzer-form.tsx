@@ -7,6 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { urlSchema } from '@/lib/validations';
 
+// Function to normalize URL by adding protocol if missing
+function normalizeUrl(inputUrl: string): string {
+  if (!/^https?:\/\//i.test(inputUrl)) {
+    return `http://${inputUrl}`;
+  }
+  return inputUrl;
+}
+
 export function UrlAnalyzerForm() {
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +37,7 @@ export function UrlAnalyzerForm() {
       }
 
       // Normalize URL
-      const normalizedUrl = result.data.url;
+      const normalizedUrl = normalizeUrl(result.data.url);
 
       // Make API call to analyze URL
       const response = await fetch('/api/analyze', {
@@ -37,7 +45,7 @@ export function UrlAnalyzerForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url: normalizedUrl }),
       });
 
       if (!response.ok) {
@@ -60,11 +68,11 @@ export function UrlAnalyzerForm() {
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ url }),
+              body: JSON.stringify({ url: normalizedUrl }),
             });
             if (retryResponse.ok) {
-              const retryData = await retryResponse.json();
-              // setAnalysisResult(retryData); // Uncomment if you want to use retry data
+              // Successfully retried, redirect to analysis page
+              router.push(`/analysis?url=${encodeURIComponent(normalizedUrl)}`);
               return;
             }
           }

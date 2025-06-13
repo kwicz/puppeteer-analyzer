@@ -11,6 +11,7 @@ const analyzeRequestSchema = z.object({
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    console.log('Received request body:', JSON.stringify(body, null, 2));
     const { url } = analyzeRequestSchema.parse(body);
 
     console.log('Received URL for analysis:', url);
@@ -198,10 +199,10 @@ export async function POST(request: Request) {
           description: 'Good alt text coverage',
           details: `${seoData.images.altTextCoverage.toFixed(
             1
-          )}% of images have alt text. Aim for 100% coverage.`,
+          )}% of images have alt text. Consider improving coverage.`,
           recommendations: [
-            'Add alt text to remaining images',
-            'Make alt text descriptive and relevant',
+            'Add alt text to images missing it',
+            'Ensure alt text is descriptive and relevant',
           ],
         });
       } else {
@@ -209,13 +210,12 @@ export async function POST(request: Request) {
           title: 'Image Alt Text',
           status: 'error' as const,
           description: 'Poor alt text coverage',
-          details: `Only ${seoData.images.altTextCoverage.toFixed(
+          details: `${seoData.images.altTextCoverage.toFixed(
             1
-          )}% of images have alt text.`,
+          )}% of images have alt text. This is below the recommended threshold.`,
           recommendations: [
-            'Add descriptive alt text to all images',
-            'Include relevant keywords where appropriate',
-            'Improve accessibility for screen readers',
+            'Add alt text to all images',
+            'Ensure alt text is descriptive and relevant',
           ],
         });
       }
@@ -309,7 +309,7 @@ export async function POST(request: Request) {
     console.log('Returning response with full analysis:', response);
     return NextResponse.json(response);
   } catch (error) {
-    console.error('API error:', error);
+    console.error('Error during URL analysis:', error);
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Invalid request data', details: error.errors },

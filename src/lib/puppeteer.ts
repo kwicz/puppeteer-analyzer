@@ -319,25 +319,13 @@ export async function generateHeatmap(url: string): Promise<HeatmapData> {
     console.error('Heatmap generation error:', error);
     // Return default values if heatmap generation fails
     return {
-      screenshot: '', // Placeholder, will be set in finally block
+      screenshot: '',
       heatmapImage: '',
       heatmapPoints: [],
     };
   } finally {
     if (browser) {
-      let finalScreenshot = '';
-      if (page) {
-        finalScreenshot = await page.screenshot({
-          encoding: 'base64',
-          fullPage: true,
-        });
-      }
       await browser.close();
-      return {
-        screenshot: `data:image/png;base64,${finalScreenshot}`,
-        heatmapImage: '',
-        heatmapPoints: [],
-      };
     }
   }
 }
