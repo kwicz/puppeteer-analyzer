@@ -5,10 +5,23 @@ export async function generateHeatmap(url: string): Promise<HeatmapData> {
   let browser;
   let page;
   try {
-    // Launch browser
+    // Launch browser with Railway-compatible configuration
     browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+      ],
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     });
 
     page = await browser.newPage();
@@ -203,7 +216,7 @@ export async function generateHeatmap(url: string): Promise<HeatmapData> {
                 Math.abs(p.x - point.x) < 50 && Math.abs(p.y - point.y) < 50
             );
         })
-        .slice(0, 50); // Limit to 50 points for performance
+        .slice(0, 50);
 
       return {
         heatmapPoints: filteredPoints.map((p) => ({
