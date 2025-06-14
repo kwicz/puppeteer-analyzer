@@ -230,7 +230,7 @@ export default function AnalysisPage() {
             </h2>
             <ContentAnalysis
               isLoading={isLoading}
-              title={analysis?.title}
+              title={analysis?.title ?? undefined}
               metaDescription={analysis?.insights?.content?.metaDescription}
               headings={analysis?.insights?.content?.headings}
               metrics={analysis?.insights?.content?.metrics}
