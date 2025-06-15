@@ -1,5 +1,5 @@
-# Use the official Node.js 18 image with Alpine Linux
-FROM node:18-alpine
+# Build stage
+FROM node:18-alpine AS builder
 
 # Install necessary packages for Puppeteer and Chrome
 RUN apk add --no-cache \
@@ -18,15 +18,11 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci
 
 # Copy the rest of the application
 COPY . .
-
-# Set environment variables for Puppeteer
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Accept build arguments for environment variables
 ARG DATABASE_URL
@@ -37,12 +33,45 @@ ARG NEXTAUTH_URL
 ENV DATABASE_URL=$DATABASE_URL
 ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
 ENV NEXTAUTH_URL=$NEXTAUTH_URL
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Build the Next.js application
 RUN npm run build
 
-# Expose the port
+# Production stage
+FROM node:18-alpine AS runner
+
+# Install runtime dependencies for Puppeteer
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    && rm -rf /var/cache/apk/*
+
+WORKDIR /app
+
+# Create a non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy the built application from builder stage
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Set environment variables for Puppeteer
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+USER nextjs
+
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "start"] 
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["node", "server.js"] 
