@@ -16,7 +16,7 @@ interface AnalysisResultsProps {
   analysis?: {
     heatmapData: {
       screenshot: string;
-      heatmapPoints: Array<{ x: number; y: number; value: number }>;
+      heatmapImageUrl: string;
     };
     contentAnalysis: ContentAnalysis;
     seoAnalysis: SeoAnalysis;
@@ -112,7 +112,7 @@ export default function AnalysisResults({
             </h2>
             <HeatmapVisualization
               imageUrl={analysis?.heatmapData?.screenshot}
-              heatmapPoints={analysis?.heatmapData?.heatmapPoints}
+              heatmapImageUrl={analysis?.heatmapData?.heatmapImageUrl}
               isLoading={isLoading}
             />
           </div>

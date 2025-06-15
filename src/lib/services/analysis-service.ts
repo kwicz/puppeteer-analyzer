@@ -1,11 +1,15 @@
-import { prisma } from '@/lib/prisma';
-import type {
+import { prisma } from '@/lib/db';
+import type { Analysis as PrismaAnalysis } from '@/generated/prisma';
+import {
   Analysis,
   AnalysisCreateInput,
   AnalysisUpdateInput,
   AnalysisInsights,
+  ContentAnalysis,
+  SeoAnalysis,
+  TechnicalAnalysis,
+  HeatmapData,
 } from '@/types/analysis';
-import { PrismaClient } from '@prisma/client';
 
 export class AnalysisError extends Error {
   constructor(message: string) {
@@ -18,6 +22,34 @@ export async function createAnalysis(
   data: AnalysisCreateInput
 ): Promise<Analysis> {
   try {
+    const defaultContentAnalysis: ContentAnalysis = {
+      wordCount: 0,
+      headings: { h1: 0, h2: 0, h3: 0, h4: 0, h5: 0, h6: 0 },
+      images: { total: 0, withAlt: 0, withoutAlt: 0 },
+      links: { total: 0, internal: 0, external: 0 },
+    };
+
+    const defaultSeoAnalysis: SeoAnalysis = {
+      title: { present: false, length: 0, value: null },
+      metaDescription: { present: false, length: 0, value: null },
+      headings: { hasH1: false, h1Count: 0, headingStructure: false },
+      images: { altTextCoverage: 0 },
+      links: { internalLinkCount: 0, externalLinkCount: 0 },
+    };
+
+    const defaultTechnicalAnalysis: TechnicalAnalysis = {
+      technologies: [],
+      performance: { loadTime: 0, resourceCount: 0 },
+      accessibility: { score: 0, issues: [] },
+      security: { hasSSL: false, securityHeaders: [] },
+    };
+
+    const defaultHeatmapData: HeatmapData = {
+      screenshot: '',
+      heatmapImage: '',
+      heatmapPoints: [],
+    };
+
     const analysis = await prisma.analysis.create({
       data: {
         url: data.url,
@@ -30,12 +62,20 @@ export async function createAnalysis(
         technologies: data.technologies,
         insights: data.insights as unknown as object,
         isPublic: data.isPublic ?? true,
+        contentAnalysis: defaultContentAnalysis,
+        seoAnalysis: defaultSeoAnalysis,
+        technicalAnalysis: defaultTechnicalAnalysis,
+        heatmapData: defaultHeatmapData,
       },
     });
 
     return {
       ...analysis,
       insights: analysis.insights as unknown as AnalysisInsights | undefined,
+      contentAnalysis: analysis.contentAnalysis as ContentAnalysis,
+      seoAnalysis: analysis.seoAnalysis as SeoAnalysis,
+      technicalAnalysis: analysis.technicalAnalysis as TechnicalAnalysis,
+      heatmapData: analysis.heatmapData as HeatmapData,
     };
   } catch (error) {
     console.error('Error creating analysis:', error);
@@ -54,6 +94,10 @@ export async function getAnalysisById(id: string): Promise<Analysis | null> {
     return {
       ...analysis,
       insights: analysis.insights as unknown as AnalysisInsights | undefined,
+      contentAnalysis: analysis.contentAnalysis as ContentAnalysis,
+      seoAnalysis: analysis.seoAnalysis as SeoAnalysis,
+      technicalAnalysis: analysis.technicalAnalysis as TechnicalAnalysis,
+      heatmapData: analysis.heatmapData as HeatmapData,
     };
   } catch (error) {
     console.error('Error fetching analysis:', error);
@@ -75,6 +119,10 @@ export async function getAnalysisByUrl(url: string): Promise<Analysis | null> {
     return {
       ...analysis,
       insights: analysis.insights as unknown as AnalysisInsights | undefined,
+      contentAnalysis: analysis.contentAnalysis as ContentAnalysis,
+      seoAnalysis: analysis.seoAnalysis as SeoAnalysis,
+      technicalAnalysis: analysis.technicalAnalysis as TechnicalAnalysis,
+      heatmapData: analysis.heatmapData as HeatmapData,
     };
   } catch (error) {
     console.error('Error fetching analysis by URL:', error);
@@ -89,9 +137,14 @@ export async function getPublicAnalyses(): Promise<Analysis[]> {
       orderBy: { createdAt: 'desc' },
     });
 
-    return analyses.map((analysis: any) => ({
+    return analyses.map((analysis: PrismaAnalysis) => ({
       ...analysis,
       insights: analysis.insights as unknown as AnalysisInsights | undefined,
+      contentAnalysis: analysis.contentAnalysis as unknown as ContentAnalysis,
+      seoAnalysis: analysis.seoAnalysis as unknown as SeoAnalysis,
+      technicalAnalysis:
+        analysis.technicalAnalysis as unknown as TechnicalAnalysis,
+      heatmapData: analysis.heatmapData as unknown as HeatmapData,
     }));
   } catch (error) {
     console.error('Error fetching public analyses:', error);
@@ -128,6 +181,10 @@ export async function updateAnalysis(
     return {
       ...analysis,
       insights: analysis.insights as unknown as AnalysisInsights | undefined,
+      contentAnalysis: analysis.contentAnalysis as ContentAnalysis,
+      seoAnalysis: analysis.seoAnalysis as SeoAnalysis,
+      technicalAnalysis: analysis.technicalAnalysis as TechnicalAnalysis,
+      heatmapData: analysis.heatmapData as HeatmapData,
     };
   } catch (error) {
     console.error('Error updating analysis:', error);
@@ -160,6 +217,10 @@ export async function getPublicAnalysis(id: string): Promise<Analysis | null> {
     return {
       ...analysis,
       insights: analysis.insights as unknown as AnalysisInsights | undefined,
+      contentAnalysis: analysis.contentAnalysis as ContentAnalysis,
+      seoAnalysis: analysis.seoAnalysis as SeoAnalysis,
+      technicalAnalysis: analysis.technicalAnalysis as TechnicalAnalysis,
+      heatmapData: analysis.heatmapData as HeatmapData,
     };
   } catch (error) {
     console.error('Error fetching public analysis:', error);
