@@ -3,14 +3,14 @@
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import HeatmapVisualization from '@/components/analysis/heatmap-visualization';
 import ContentAnalysis from '@/components/analysis/content-analysis';
 import SEOInsights from '@/components/analysis/seo-insights';
 import TechnicalAnalysis from '@/components/analysis/technical-analysis';
 import { Analysis } from '@/types/analysis';
 
-export default function AnalysisPage() {
+function AnalysisContent() {
   const searchParams = useSearchParams();
   const url = searchParams.get('url');
   const [isLoading, setIsLoading] = useState(true);
@@ -297,6 +297,32 @@ export default function AnalysisPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        minHeight: '50vh',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        textAlign: 'center',
+      }}
+    >
+      <div style={{ marginBottom: '1rem' }}>Loading...</div>
+    </div>
+  );
+}
+
+export default function AnalysisPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <AnalysisContent />
+    </Suspense>
   );
 }
 
